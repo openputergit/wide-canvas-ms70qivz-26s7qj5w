@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON_NET // Cyberpunk Teammate Matcher & Workspace</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron & Rajdhani for Cyberpunk style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cyber: ['Orbitron', 'sans-serif'],
+                        sans: ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        cyberDark: '#080c14',
+                        cyberGray: '#121824',
+                        cyberBlue: '#00f0ff',
+                        cyberPink: '#ff007f',
+                        cyberGreen: '#39ff14',
+                        cyberTeal: '#0bb7db', // matching brick hue from user upload
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Neon Glows */
+        .neon-border-teal {
+            border: 1px solid #0bb7db;
+            box-shadow: 0 0 10px rgba(11, 183, 219, 0.4);
+        }
+        .neon-glow-teal {
+            text-shadow: 0 0 8px rgba(11, 183, 219, 0.6);
+        }
+        .neon-border-pink {
+            border: 1px solid #ff007f;
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 8px rgba(255, 0, 127, 0.6);
+        }
+        /* Custom Cyberpunk grid styling */
+        .cyber-grid {
+            background-image: 
+                linear-gradient(rgba(11, 183, 219, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(11, 183, 219, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080c14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0bb7db;
+            border-radius: 3px;
+        }
+        /* Soundwave animation */
+        .bar {
+            width: 3px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            0% { height: 3px; }
+            100% { height: 20px; }
+        }
+        /* Typewriter / terminal prompt styling */
+        .terminal-prompter::after {
+            content: '█';
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-cyberDark text-slate-100 min-h-screen cyber-grid font-sans overflow-x-hidden selection:bg-cyberTeal selection:text-black">
+
+    <!-- TOP HEADER BAR -->
+    <header class="border-b border-cyberTeal bg-cyberGray/90 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-cyberTeal to-cyberPink rounded flex items-center justify-center neon-border-teal">
+                        <i class="bi bi-cpu text-xl text-black"></i>
+                    </div>
+                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-cyberGreen rounded-full animate-ping"></div>
+                </div>
+                <div>
+                    <h1 class="font-cyber font-black text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyberTeal via-cyan-400 to-cyberPink">
+                        NEON_NET
+                    </h1>
+                    <p class="text-xs text-cyberTeal/80 tracking-widest uppercase">CO-LAB SYNCHRONIZER v2.84</p>
+                </div>
+            </div>
+
+            <!-- Global Status Stats -->
+            <div class="hidden md:flex items-center space-x-6 text-xs font-cyber">
+                <div class="text-right">
+                    <span class="text-slate-400">NET_STATUS:</span>
+                    <span class="text-cyberGreen ml-1">ENCRYPTED</span>
+                </div>
+                <div class="text-right border-l border-slate-800 pl-6">
+                    <span class="text-slate-400">ACTIVE_RUNNERS:</span>
+                    <span class="text-cyberTeal ml-1" id="activeRunnersCount">1,348</span>
+                </div>
+                <div class="text-right border-l border-slate-800 pl-6">
+                    <span class="text-slate-400">TOTAL_PROJECTS:</span>
+                    <span class="text-cyberPink ml-1" id="totalProjectsCount">249</span>
+                </div>
+            </div>
+
+            <!-- Profile Overview/Disconnect Button -->
+            <div class="flex items-center space-x-4">
+                <div id="userHeaderProfile" class="hidden flex items-center space-x-3">
+                    <div class="text-right">
+                        <p class="text-sm font-cyber text-cyberTeal" id="headerProfileName">cyber_ghost</p>
+                        <span class="text-xs text-cyberPink" id="headerProfileRole">Netrunner</span>
+                    </div>
+                    <button onclick="logOut()" class="hover:text-cyberPink transition-colors text-slate-400 text-lg p-2 bg-slate-900 border border-slate-700 hover:border-cyberPink rounded">
+                        <i class="bi bi-power"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- NOTIFICATION TOAST OVERLAY -->
+        <div id="toast" class="fixed top-20 right-4 z-50 hidden max-w-sm bg-cyberGray border-2 border-cyberTeal p-4 rounded shadow-2xl animate-bounce">
+            <div class="flex items-start space-x-3">
+                <div class="text-cyberTeal" id="toastIcon">
+                    <i class="bi bi-info-circle-fill text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="font-cyber text-sm text-cyberTeal" id="toastTitle">System Broadcast</h4>
+                    <p class="text-xs text-slate-300 mt-1" id="toastMsg">Initializing cyber deck...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. LOGIN / AUTH SCREEN (Initial display) -->
+        <div id="loginScreen" class="max-w-md mx-auto my-12 bg-cyberGray/85 border-2 border-cyberTeal p-8 rounded shadow-2xl relative">
+            <div class="absolute -top-3 left-4 px-2 py-0.5 bg-cyberTeal text-black text-xs font-cyber tracking-widest">
+                PERIPHERAL AUTHENTICATION
+            </div>
+            
+            <div class="text-center mb-8">
+                <i class="bi bi-shield-lock text-5xl text-cyberTeal neon-glow-teal"></i>
+                <h3 class="font-cyber text-2xl mt-4 tracking-widest text-[#0bb7db]">ACCESS PORTAL</h3>
+                <p class="text-xs text-slate-400 mt-2">Initialize neural profile link to join strike teams.</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-cyber text-cyberTeal mb-2">RUNNER ALIAS</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-cyberTeal">
+                            <i class="bi bi-terminal"></i>
+                        </span>
+                        <input type="text" id="userInputAlias" required placeholder="e.g. cyber_shaman" 
+                               class="w-full bg-slate-950 border border-slate-800 focus:border-cyberTeal text-slate-100 rounded p-2 pl-10 outline-none transition font-cyber">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-cyber text-cyberTeal mb-2">NEURAL CLASS / SPECIALIZATION</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="primeClass" value="Frontend Tech" checked class="sr-only peer">
+                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-3 rounded text-center text-xs hover:border-cyberTeal transition bg-slate-950/50">
+                                <i class="bi bi-display text-lg block mb-1 text-cyberTeal"></i>
+                                UI / Frontend
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="primeClass" value="Backend Logic" class="sr-only peer">
+                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-3 rounded text-center text-xs hover:border-cyberTeal transition bg-slate-950/50">
+                                <i class="bi bi-cpu text-lg block mb-1 text-cyberPink"></i>
+                                Backend / DB
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="primeClass" value="AI Synthesiologist" class="sr-only peer">
+                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-3 rounded text-center text-xs hover:border-cyberTeal transition bg-slate-950/50">
+                                <i class="bi bi-brain text-lg block mb-1 text-cyberGreen"></i>
+                                AI Specialist
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="primeClass" value="Web3 Contract-Slinger" class="sr-only peer">
+                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-3 rounded text-center text-xs hover:border-cyberTeal transition bg-slate-950/50">
+                                <i class="bi bi-layers text-lg block mb-1 text-yellow-500"></i>
+                                Smart Contracts
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-cyberTeal hover:bg-cyan-500 text-black font-cyber font-bold py-3 rounded transition-all duration-300 flex items-center justify-center space-x-2 neon-border-teal uppercase tracking-widest">
+                    <span>Synchronize Profile</span>
+                    <i class="bi bi-arrow-right-short text-xl"></i>
+                </button>
+            </form>
+        </div>
+
+
+        <!-- 2. MAIN APPLICATION WORKSPACE (Hidden initially) -->
+        <div id="mainAppWorkspace" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- SIDEBAR PORT / NAVIGATION (3 Cols) -->
+            <aside class="lg:col-span-3 space-y-6">
+                <!-- User Core HUD Card -->
+                <div class="bg-cyberGray border border-cyberTeal p-4 rounded relative overflow-hidden">
+                    <div class="absolute top-0 right-0 h-12 w-12 opacity-10 font-cyber font-black text-6xl select-none text-cyberTeal">ID</div>
+                    
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="relative">
+                            <img id="hudAvatar" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80" alt="avatar" class="w-12 h-12 rounded object-cover border border-cyberTeal">
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-cyberGreen rounded-full border border-black"></div>
+                        </div>
+                        <div>
+                            <h4 id="hudAlias" class="font-cyber text-cyberTeal text-md">runner_unlinked</h4>
+                            <p id="hudClass" class="text-xs text-cyberPink">Netrunner</p>
+                        </div>
+                    </div>
+
+                    <!-- Cyber Deck Stats -->
+                    <div class="space-y-2 mt-4 text-xs border-t border-slate-800 pt-4">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">DECKS_LOADED:</span>
+                            <span class="text-cyberTeal" id="hudDeckSkillsCount">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">MATCHED_STRIKE_TEAM:</span>
+                            <span class="text-cyberPink" id="hudTeamStatus">NONE</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">COMPLETED_MATRIX:</span>
+                            <span class="text-cyberGreen" id="hudCompletedCount">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Portal Deck -->
+                <nav class="space-y-2">
+                    <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all text-cyberTeal">
+                        <span class="flex items-center"><i class="bi bi-grid-1x2-fill mr-3"></i> CORE DASHBOARD</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('skills')" id="btn-tab-skills" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all">
+                        <span class="flex items-center"><i class="bi bi-shield-shaded mr-3"></i> NEURAL SKILL DECK</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('matchmaker')" id="btn-tab-matchmaker" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all">
+                        <span class="flex items-center"><i class="bi bi-people mr-3"></i> TEAM MATCHMAKER</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('chat')" id="btn-tab-chat" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all relative">
+                        <span class="flex items-center"><i class="bi bi-chat-dots mr-3"></i> TEAM SYNC-CHAT</span>
+                        <span class="absolute right-8 top-3 h-2 w-2 rounded-full bg-cyberPink animate-pulse"></span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('workspace')" id="btn-tab-workspace" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all">
+                        <span class="flex items-center"><i class="bi bi-kanban mr-3"></i> WORKSPACE TASKS</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('export')" id="btn-tab-export" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all">
+                        <span class="flex items-center"><i class="bi bi-brush mr-3"></i> APP & LOGO FORGE</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                    <button onclick="switchTab('certificates')" id="btn-tab-certificates" class="nav-btn w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 hover:border-cyberTeal rounded font-cyber text-sm text-left transition-all">
+                        <span class="flex items-center"><i class="bi bi-patch-check mr-3"></i> DATA PORTFOLIO</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                </nav>
+
+                <!-- Mini System Soundwave Feed -->
+                <div class="hidden lg:block bg-slate-950 p-4 border border-slate-800 text-xs rounded">
+                    <p class="font-cyber text-xs text-cyberTeal/70 mb-2">BROADCAST SIGNAL FREQ</p>
+                    <div class="flex items-end space-x-1.5 h-10 mt-1">
+                        <div class="bar bg-cyberTeal" style="animation-delay: 0.1s"></div>
+                        <div class="bar bg-cyan-400" style="animation-delay: 0.5s"></div>
+                        <div class="bar bg-cyberPink" style="animation-delay: 0.2s"></div>
+                        <div class="bar bg-cyberGreen" style="animation-delay: 0.8s"></div>
+                        <div class="bar bg-cyberTeal" style="animation-delay: 0.4s"></div>
+                        <div class="bar bg-cyberPink" style="animation-delay: 0.6s"></div>
+                        <div class="bar bg-cyberTeal" style="animation-delay: 0.3s"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN WORKGROUND (9 Cols) -->
+            <section class="lg:col-span-9 space-y-6">
+
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <!-- Banner -->
+                    <div class="relative bg-gradient-to-r from-cyberTeal/20 via-cyberPink/10 to-transparent p-6 rounded border border-cyberTeal/40 overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 opacity-10">
+                            <i class="bi bi-infinity text-9xl"></i>
+                        </div>
+                        <h2 class="font-cyber text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyberTeal to-cyberPink tracking-widest">
+                            WELCOME TO THE INTERNET MATRIX
+                        </h2>
+                        <p class="text-sm text-slate-300 max-w-xl mt-2">
+                            Secure matches, launch cybernetic applications, formulate dynamic pipelines, and code future neural nodes. Get matches matched via AI nodes instantly.
+                        </p>
+                    </div>
+
+                    <!-- Steps Dashboard Wizard -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-cyberTeal transition relative">
+                            <span class="absolute top-2 right-2 font-cyber text-cyberTeal text-xs font-black">01</span>
+                            <div class="text-cyberTeal text-xl mb-2"><i class="bi bi-shield-shaded"></i></div>
+                            <h4 class="font-cyber text-sm">UPGRADE SKILLS</h4>
+                            <p class="text-xs text-slate-400 mt-1">Define your cyberdeck level, code protocols.</p>
+                            <button onclick="switchTab('skills')" class="mt-4 text-xs font-cyber text-cyberTeal hover:underline">Launch deck &rarr;</button>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-cyberPink transition relative">
+                            <span class="absolute top-2 right-2 font-cyber text-cyberPink text-xs font-black">02</span>
+                            <div class="text-cyberPink text-xl mb-2"><i class="bi bi-people"></i></div>
+                            <h4 class="font-cyber text-sm">AI MATCH TEAM</h4>
+                            <p class="text-xs text-slate-400 mt-1">Link with tech-runners to cover core sectors.</p>
+                            <button onclick="switchTab('matchmaker')" class="mt-4 text-xs font-cyber text-cyberPink hover:underline">Scan system &rarr;</button>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-cyberGreen transition relative">
+                            <span class="absolute top-2 right-2 font-cyber text-cyberGreen text-xs font-black">03</span>
+                            <div class="text-cyberGreen text-xl mb-2"><i class="bi bi-rocket-takeoff"></i></div>
+                            <h4 class="font-cyber text-sm">FORGE APP</h4>
+                            <p class="text-xs text-slate-400 mt-1">Export system assets and mint cyber certifications.</p>
+                            <button onclick="switchTab('export')" class="mt-4 text-xs font-cyber text-cyberGreen hover:underline">Export Matrix &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Recommended Projects by AI (Preview) -->
+                    <div class="border border-slate-800 bg-cyberGray/50 p-6 rounded">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                            <h3 class="font-cyber text-md text-cyberTeal flex items-center">
+                                <i class="bi bi-stars mr-2"></i> SYSTEM RECOMMEND PROJECTS
+                            </h3>
+                            <button onclick="switchTab('matchmaker')" class="text-xs text-slate-400 hover:text-cyberTeal transition">View details</button>
+                        </div>
+                        <div id="dashboardAiProjectPreview" class="text-slate-400 text-xs italic">
+                            Initialize matching to view recommendation decks or trigger an Oracle call in the 'Team Matchmaker' tab.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: NEURAL SKILL DECK -->
+                <div id="tab-skills" class="tab-content hidden space-y-6">
+                    <div class="border border-cyberTeal bg-cyberGray/80 p-6 rounded relative">
+                        <div class="absolute -top-3 left-4 px-2 py-0.5 bg-cyberTeal text-black text-xs font-cyber tracking-widest">
+                            SKILL INVENTORY DECK
+                        </div>
+
+                        <p class="text-xs text-slate-400 mb-6">
+                            Customize and catalog your technical cybernetics so the AI Oracle can align you into suitable tactical dev- squads.
+                        </p>
+
+                        <!-- Add Skill Form -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-cyber text-slate-400 mb-2">SKILL PROTOCOL NAME</label>
+                                <input type="text" id="newSkillInput" placeholder="e.g. Solidity, Rust, Angular, PyTorch" 
+                                       class="w-full bg-slate-950 border border-slate-800 focus:border-cyberTeal text-slate-100 rounded p-2 text-sm outline-none transition font-cyber">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-cyber text-slate-400 mb-2">EXPERTISE IN %</label>
+                                <input type="number" id="newSkillLevel" min="1" max="100" default="80" placeholder="80" 
+                                       class="w-full bg-slate-950 border border-slate-800 focus:border-cyberTeal text-slate-100 rounded p-2 text-sm outline-none transition font-cyber">
+                            </div>
+                        </div>
+
+                        <button onclick="addSkillToDeck()" class="px-6 py-2.5 bg-slate-900 border border-cyberTeal text-cyberTeal font-cyber text-xs rounded hover:bg-cyberTeal hover:text-black transition uppercase tracking-wider flex items-center gap-2">
+                            <i class="bi bi-plus-lg"></i> Inject Skill Vector
+                        </button>
+
+                        <!-- Render Skill Deck List -->
+                        <div class="mt-8">
+                            <h4 class="font-cyber text-xs text-cyberTeal/80 mb-4 tracking-widest border-b border-slate-800 pb-2">ACTIVE VECTOR CHIPS</h4>
+                            <div id="skillDeckList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Dynamically filled skills with progress sliders -->
+                            </div>
+                        </div>
+
+                        <!-- Save Profile Info Button -->
+                        <div class="mt-8 pt-4 border-t border-slate-800 flex justify-end">
+                            <button onclick="saveProfileToDB()" class="px-6 py-3 bg-cyberTeal hover:bg-cyan-500 text-black font-cyber font-bold text-xs uppercase tracking-widest rounded transition-all duration-300">
+                                <i class="bi bi-cloud-upload"></i> Upload Deck to Neural Network
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: TEAM & PROJECT MATCHMAKER -->
+                <div id="tab-matchmaker" class="tab-content hidden space-y-6">
+                    <!-- AI recommendation trigger -->
+                    <div class="border border-cyberPink/55 bg-cyberGray p-6 rounded relative">
+                        <div class="absolute -top-3 left-4 px-2 py-0.5 bg-cyberPink text-slate-50 text-xs font-cyber tracking-widest">
+                            AI ORACLE MATCHMAKER ENGINE
+                        </div>
+
+                        <h3 class="font-cyber text-lg mt-2 text-transparent bg-clip-text bg-gradient-to-r from-cyberTeal to-cyberPink">GENERATE NEURAL PROJECT & ALIGN MATCH</h3>
+                        <p class="text-xs text-slate-300 mt-1 mb-6">
+                            Pressing the core button queries the Web App Oracle using AI, tailoring a customized project design aligned with your specific profile, then finding suitable teammates from the matrix.
+                        </p>
+
+                        <button onclick="triggerAIRecommendation()" id="aiRecBtn" class="px-6 py-3 bg-cyberPink hover:bg-pink-600 text-white font-cyber font-bold text-sm rounded tracking-widest uppercase transition-all duration-300 flex items-center space-x-2 neon-border-pink">
+                            <i class="bi bi-cpu-fill animate-spin text-lg" id="aiSpinIcon" style="display: none;"></i>
+                            <span>Query Cyberoracle System</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Project recommendations list -->
+                    <div id="aiRecResults" class="hidden space-y-4">
+                        <h4 class="font-cyber text-xs text-cyberTeal tracking-wider">AI SYSTEM RECOMMENDATIONS FOUND</h4>
+                        <div id="aiRecOutputSection" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Recommendations will dynamically populate here -->
+                        </div>
+                    </div>
+
+                    <!-- Team matching block -->
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-cyber text-md text-cyberTeal">AVAILABLE OPERATIVES IN NETWORK</h4>
+                            <span class="text-xs text-slate-400" id="matrixCount">Scanning data...</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="matrixOperativesGrid">
+                            <!-- Network cyber-runners render -->
+                        </div>
+
+                        <div class="bg-slate-950 p-4 rounded border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h5 class="font-cyber text-sm text-cyberPink">STRIKE TEAM ALIGNMENT</h5>
+                                <p class="text-xs text-slate-400 mt-1" id="teamAlignmentStatus">Not assembled. Assemble a project and hire teammate matching.</p>
+                            </div>
+                            <button onclick="initiateTeamMatch()" class="px-4 py-2 bg-slate-900 hover:bg-cyberTeal hover:text-black border border-cyberPink text-cyberPink text-xs font-cyber font-bold rounded transition-all">
+                                Autoassemble Ideal Strike Team
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: SYNC CHAT -->
+                <div id="tab-chat" class="tab-content hidden space-y-6">
+                    <div class="border border-cyberTeal bg-cyberGray rounded overflow-hidden flex flex-col h-[550px]">
+                        <!-- Chat header -->
+                        <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-cyberPink flex items-center justify-center font-cyber text-black text-xs font-bold">ST</div>
+                                <div>
+                                    <h4 class="font-cyber text-sm text-cyberTeal">Strike_Team Alpha_Sync</h4>
+                                    <p class="text-[10px] text-cyberGreen tracking-widest uppercase">STRIKE CHANNELS ONLINE</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 bg-cyberGreen rounded-full animate-ping"></span>
+                                <span class="text-xs font-cyber text-slate-400">SYNC_OK</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat message listing -->
+                        <div id="chatMessageFlow" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-950/20">
+                            <!-- Messages -->
+                        </div>
+
+                        <!-- Chat input panel -->
+                        <form onsubmit="sendChatMessage(event)" class="p-4 bg-slate-950/80 border-t border-slate-800 flex gap-2">
+                            <input type="text" id="chatMessageInput" placeholder="Compile neural ping..." required
+                                   class="flex-1 bg-slate-900 border border-slate-800 focus:border-cyberTeal p-2.5 text-sm rounded outline-none text-slate-100 font-cyber">
+                            <button type="submit" class="px-5 py-2.5 bg-cyberTeal hover:bg-cyan-500 text-black font-cyber text-xs uppercase font-bold tracking-widest rounded flex items-center gap-1">
+                                <span>SEND</span> <i class="bi bi-send-fill text-xs"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB: WORKSPACE TASKS -->
+                <div id="tab-workspace" class="tab-content hidden space-y-6">
+                    <!-- Workspace Overview Grid -->
+                    <div class="bg-slate-900 border border-slate-800 rounded p-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-6">
+                            <div>
+                                <h3 class="font-cyber text-lg text-cyberTeal">MATRIX PIPELINE PROTOCOLS</h3>
+                                <p class="text-xs text-slate-400">Map dev tasks, synchronize stages and trace operational levels.</p>
+                            </div>
+                            <button onclick="openAddTaskModal()" class="px-4 py-2 bg-cyberTeal hover:bg-cyan-500 text-black text-xs font-cyber font-bold tracking-widest uppercase rounded flex items-center gap-2">
+                                <i class="bi bi-plus-circle"></i> Inject Task Protocol
+                            </button>
+                        </div>
+
+                        <!-- Task add popup modal -->
+                        <div id="taskModal" class="hidden bg-slate-950 border border-cyberPink p-4 rounded mb-6 space-y-4">
+                            <h4 class="font-cyber text-xs text-cyberPink">NEW WORKSPACE CONTRACT CARD</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">CONTRACT / TASK PROTOCOL</label>
+                                    <input type="text" id="taskTitleInput" placeholder="e.g. Code deployment hooks" class="w-full bg-slate-900 border border-slate-800 p-2 text-xs rounded text-slate-100 font-cyber">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">OPERATIVE ASSIGNED</label>
+                                    <select id="taskAssignee" class="w-full bg-slate-900 border border-slate-800 p-2 text-xs rounded text-slate-100 font-cyber">
+                                        <!-- Dynamic options filled with you + strike team members -->
+                                        <option value="cyber_ghost">cyber_ghost (You)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">IMPORTANCE INDEX</label>
+                                    <select id="taskPriority" class="w-full bg-slate-900 border border-slate-800 p-2 text-xs rounded text-slate-100 font-cyber">
+                                        <option value="LOW PIN">LOW PRIORITY</option>
+                                        <option value="MID CORE" selected>MEDIUM PRIORITY</option>
+                                        <option value="MAX CRISIS">CRITICAL PRIORITY</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="submitNewTask()" class="w-full py-2 bg-cyberPink text-white text-xs font-cyber font-bold tracking-widest uppercase rounded hover:bg-pink-600 transition">
+                                        Inject Task Card
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress visual tracking bar -->
+                        <div class="mb-8 bg-slate-950 border border-slate-800 p-4 rounded">
+                            <div class="flex items-center justify-between text-xs font-cyber mb-2">
+                                <span class="text-slate-400">DECK PROGRESS MATRIX COMPLIANCE:</span>
+                                <span class="text-cyberTeal" id="matrixProgressPercent">0% COMPLETE</span>
+                            </div>
+                            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                <div id="matrixProgressBar" class="h-full bg-gradient-to-r from-cyberTeal to-cyberPink transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Kanban grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- TODO -->
+                            <div class="bg-slate-950 border border-slate-800 p-3 rounded">
+                                <h4 class="font-cyber text-xs text-slate-400 border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                                    <span>BACKLOG CONTRACTS</span>
+                                    <span class="bg-slate-900 px-2 py-0.5 rounded text-[10px]" id="todoCount">0</span>
+                                </h4>
+                                <div id="kanbanTodo" class="space-y-3">
+                                    <!-- Dynamic tasks -->
+                                </div>
+                            </div>
+
+                            <!-- IN IP -->
+                            <div class="bg-slate-950 border border-cyberPink/30 p-3 rounded">
+                                <h4 class="font-cyber text-xs text-cyberPink border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                                    <span>DIAGNOSTIC PIPELINE</span>
+                                    <span class="bg-slate-900 px-2 py-0.5 rounded text-[10px] text-cyberPink" id="inProgressCount">0</span>
+                                </h4>
+                                <div id="kanbanInIp" class="space-y-3">
+                                    <!-- Dynamic tasks -->
+                                </div>
+                            </div>
+
+                            <!-- DONE -->
+                            <div class="bg-slate-950 border border-cyberGreen/30 p-3 rounded">
+                                <h4 class="font-cyber text-xs text-cyberGreen border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                                    <span>COMPILED PIPELINE</span>
+                                    <span class="bg-slate-900 px-2 py-0.5 rounded text-[10px] text-cyberGreen" id="doneCount">0</span>
+                                </h4>
+                                <div id="kanbanDone" class="space-y-3">
+                                    <!-- Dynamic tasks -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: APP & LOGO FORGE -->
+                <div id="tab-export" class="tab-content hidden space-y-6">
+                    <div class="border border-cyberTeal bg-cyberGray p-6 rounded relative">
+                        <div class="absolute -top-3 left-4 px-2 py-0.5 bg-cyberTeal text-slate-950 text-xs font-cyber tracking-widest">
+                            APP & LOGO BUILDER APPARATUS
+                        </div>
+
+                        <h3 class="font-cyber text-lg mt-2 text-cyberTeal">DECK STABILITY AND LOGO FORGERY</h3>
+                        <p class="text-xs text-slate-300 mt-1 mb-6">
+                            Export mock apps and generate stylistic cyberpunk brand marks using interactive generation parameters.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Input section -->
+                            <div class="bg-slate-950 p-4 border border-slate-800 rounded space-y-4">
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">APP PROJECT DOMINANT NAME</label>
+                                    <input type="text" id="appProjectNameInput" placeholder="e.g. SOULEATER_DEFI" class="w-full bg-slate-900 border border-slate-800 p-2.5 text-xs rounded text-slate-100 font-cyber">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">BRAND COLOR THEME DECK</label>
+                                    <select id="appThemeColor" class="w-full bg-slate-900 border border-slate-800 p-2.5 text-xs rounded text-slate-100 font-cyber">
+                                        <option value="cyberTeal">Neon Blue Brick (#0bb7db)</option>
+                                        <option value="cyberPink">Crimson Hack (#ff007f)</option>
+                                        <option value="cyberGreen">Matrix Green (#39ff14)</option>
+                                        <option value="orange">Rust Core (#f97316)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-cyber text-slate-400 mb-1">CORE TARGET PLATFORM</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="targetPlat" value="Web Node" checked class="sr-only peer">
+                                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-2 text-[10px] text-center rounded">WEB</div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="targetPlat" value="VR Chip" class="sr-only peer">
+                                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-2 text-[10px] text-center rounded">VR NET</div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="targetPlat" value="Mobile Decryptor" class="sr-only peer">
+                                            <div class="border border-slate-800 peer-checked:border-cyberTeal p-2 text-[10px] text-center rounded">D-APP</div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button onclick="forgeAppAndLogo()" class="w-full py-3 bg-cyberTeal hover:bg-cyan-500 font-cyber font-bold text-xs text-black uppercase tracking-widest rounded transition">
+                                    Forge App Mock & Mark Symbol
+                                </button>
+                            </div>
+
+                            <!-- Live App Renderer Canvas Sandbox -->
+                            <div class="bg-slate-950 p-4 border border-cyberPink rounded relative min-h-[300px] flex flex-col justify-between">
+                                <div class="absolute top-1 right-2 w-3 h-3 bg-cyberPink rounded-full animate-pulse"></div>
+                                <h4 class="font-cyber text-[10px] text-cyberPink tracking-widest uppercase mb-4">LIVE EXPORT PROTOCOL CANVAS</h4>
+
+                                <div class="flex-1 flex flex-col items-center justify-center space-y-4" id="forgeDraftArea">
+                                    <i class="bi bi-gear-wide-connected text-5xl text-slate-700 animate-spin"></i>
+                                    <p class="text-xs text-slate-500 font-cyber text-center">Ready to align canvas...</p>
+                                </div>
+
+                                <div class="border-t border-slate-800 pt-3 mt-4 flex items-center justify-between">
+                                    <span class="text-[10px] text-slate-500 font-cyber">DEPLOY_NODE ID: d784-x</span>
+                                    <button onclick="exportCode()" class="text-xs text-cyberTeal hover:underline">Export Portfolio Code</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: DATA PORTFOLIO & CERTIFICATES -->
+                <div id="tab-certificates" class="tab-content hidden space-y-6">
+                    <div class="border border-cyberPink bg-cyberGray p-6 rounded relative">
+                        <div class="absolute -top-3 left-4 px-2 py-0.5 bg-cyberPink text-white text-xs font-cyber tracking-widest">
+                            NEURAL CERTIFICATIONS & COGNITIVE LOGS
+                        </div>
+
+                        <p class="text-xs text-slate-300 mb-6">
+                            When Strike Team pipelines are completed and assets deployed, you are clearing matrix parameters. Claim cryptographic proof records of performance.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Certificate viewer -->
+                            <div class="bg-slate-950 p-6 border border-slate-800 rounded relative overflow-hidden" id="mintedCertArea">
+                                <div class="absolute -right-16 -bottom-16 opacity-5 bg-cyberTeal w-64 h-64 rounded-full"></div>
+                                <h3 class="font-cyber text-sm text-cyberTeal flex items-center border-b border-slate-800 pb-2 mb-4">
+                                    <i class="bi bi-award-fill mr-2"></i> SECURITY VERIFIED ALIAS SPEC
+                                </h3>
+
+                                <div class="space-y-3 font-cyber text-xs">
+                                    <div>
+                                        <p class="text-slate-500">ISSUED_TO:</p>
+                                        <p class="text-slate-200 text-sm tracking-wider" id="certRunnerAlias">CYBER_RUNNER</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-500">MAPPED_ROLE:</p>
+                                        <p class="text-cyberPink" id="certRunnerClass">NETRUNNER</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-500">VERIFICATION_STAMP:</p>
+                                        <p class="text-cyberGreen text-[10px] font-mono leading-none break-all" id="certRunnerHash">0x74FEA...824FDEE2</p>
+                                    </div>
+                                    <div class="pt-2">
+                                        <span class="px-2 py-0.5 bg-cyberTeal/10 text-cyberTeal text-[10px] rounded border border-cyberTeal/40">LEVEL_1_VERIFIED</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 flex justify-between items-center text-[10px] text-slate-500">
+                                    <span>ID: CRYPTO_NET_2026</span>
+                                    <button onclick="downloadCertificate()" class="text-cyberTeal hover:underline font-cyber">Download Stamp</button>
+                                </div>
+                            </div>
+
+                            <!-- Export options -->
+                            <div class="bg-slate-950 p-6 border border-slate-800 rounded flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-cyber text-sm text-cyberPink mb-2">NEURAL EXPORT PROTOCOL</h4>
+                                    <p class="text-xs text-slate-400">
+                                        Export your completed app builds, custom designed vector logos, and active skill deck layout in a single transport JSON deck to upload to your secondary physical grids.
+                                    </p>
+                                </div>
+
+                                <button onclick="simulateTotalProjectExport()" class="mt-6 py-2.5 bg-slate-900 border border-cyberPink hover:bg-cyberPink hover:text-white text-cyberPink text-xs font-cyber tracking-widest font-bold uppercase rounded transition">
+                                    Launch Packet Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+
+    </main>
+
+    <!-- FOOTER SYSTEM LOGS -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-cyberTeal font-cyber">&gt;://</span>
+                <p class="font-cyber" id="liveTerminalFeed">System ready. Establish auth protocol inputs.</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="#" class="hover:text-cyberTeal">MATRIX_POLICY</a>
+                <span>|</span>
+                <a href="#" class="hover:text-cyberPink">CYBER_TERMS</a>
+                <span>|</span>
+                <span class="text-cyberTeal font-cyber">DECONSTRUCTED // 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // DB Config Constants
+        const appSlug = "smooth-sharp-bright-7373";
+        const dbUrl = "https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb";
+        const aiUrl = "https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai";
+
+        // Local Storage State Fallback / Caching logic
+        let state = {
+            user: null,
+            skills: [
+                { name: "JavaScript", level: 90 },
+                { name: "React", level: 85 },
+                { name: "Tailwind CSS", level: 95 }
+            ],
+            currentProject: null,
+            matchedTeam: null,
+            tasks: [],
+            chatMessages: [],
+            completedPercent: 0,
+            activeTab: 'dashboard'
+        };
+
+        // Simulated teammate pool with matching properties
+        const cyberTeammatesPool = [
+            { alias: "NullPointer", class: "Backend Logic", skills: ["Python", "NodeJS", "WebSockets", "MongoDB"], avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80" },
+            { alias: "Glitch_Queen", class: "Frontend Tech", skills: ["React", "HTML Canvas", "CSS Shader", "Sass"], avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" },
+            { alias: "Xenon_Deity", class: "Web3 Contract-Slinger", skills: ["Solidity", "Rust", "EthersJS", "Hardhat"], avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80" },
+            { alias: "Echo_Vortex", class: "AI Synthesiologist", skills: ["TensorFlow", "FastAPI", "NLP", "Pandas"], avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" }
+        ];
+
+        // System notifications soundwave trigger
+        function showToast(title, message, iconType = 'info') {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastTitle.innerText = title;
+            toastMsg.innerText = message;
+            
+            if (iconType === 'error') {
+                toastIcon.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-xl text-cyberPink"></i>`;
+                toast.style.borderColor = "#ff007f";
+            } else if (iconType === 'success') {
+                toastIcon.innerHTML = `<i class="bi bi-patch-check-fill text-xl text-cyberGreen"></i>`;
+                toast.style.borderColor = "#39ff14";
+            } else {
+                toastIcon.innerHTML = `<i class="bi bi-info-circle-fill text-xl text-cyberTeal"></i>`;
+                toast.style.borderColor = "#0bb7db";
+            }
+
+            toast.classList.remove('hidden');
+            document.getElementById('liveTerminalFeed').innerText = `[${new Date().toLocaleTimeString()}] ALERT: ${message}`;
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4500);
+        }
+
+        // On Load Check System Auth
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('neon_user');
+            if (savedUser) {
+                state.user = JSON.parse(savedUser);
+                const savedSkills = localStorage.getItem('neon_skills');
+                if (savedSkills) {
+                    state.skills = JSON.parse(savedSkills);
+                }
+                const savedTasks = localStorage.getItem('neon_tasks');
+                if (savedTasks) {
+                    state.tasks = JSON.parse(savedTasks);
+                }
+                initAppSession();
+            }
+        });
+
+        // Login flow
+        function handleLogin(event) {
+            event.preventDefault();
+            const alias = document.getElementById('userInputAlias').value.trim();
+            const primeClass = document.querySelector('input[name="primeClass"]:checked').value;
+
+            if (!alias) return;
+
+            state.user = {
+                alias: alias,
+                class: primeClass,
+                loginTime: new Date().toISOString()
+            };
+
+            // Save to browser cache
+            localStorage.setItem('neon_user', JSON.stringify(state.user));
+
+            showToast("Sync Granted", `Runner profile linked as ${alias}`, "success");
+            
+            // Try to sync/insert to DB MongoDB operations
+            saveUserToMongoDB(state.user);
+
+            initAppSession();
+        }
+
+        function initAppSession() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainAppWorkspace').classList.remove('hidden');
+
+            // Populate header and HUD
+            document.getElementById('userHeaderProfile').classList.remove('hidden');
+            document.getElementById('headerProfileName').innerText = state.user.alias;
+            document.getElementById('headerProfileRole').innerText = state.user.class;
+
+            document.getElementById('hudAlias').innerText = state.user.alias;
+            document.getElementById('hudClass').innerText = state.user.class;
+
+            // Generate Verification Stamp
+            document.getElementById('certRunnerAlias').innerText = state.user.alias.toUpperCase();
+            document.getElementById('certRunnerClass').innerText = state.user.class.toUpperCase();
+            document.getElementById('certRunnerHash').innerText = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+
+            // Render Dynamic Components
+            renderSkills();
+            renderTasks();
+            updateProgressMetrics();
+            loadMatrixOperatives();
+            simulateChatThread();
+
+            // Default initial tab
+            switchTab('dashboard');
+        }
+
+        function logOut() {
+            localStorage.removeItem('neon_user');
+            localStorage.removeItem('neon_skills');
+            localStorage.removeItem('neon_tasks');
+            state.user = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainAppWorkspace').classList.add('hidden');
+            document.getElementById('userHeaderProfile').classList.add('hidden');
+            showToast("Connection Terminated", "Session ended smoothly", "info");
+        }
+
+        // TAB SYSTEM SWITCHING
+        function switchTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+            }
+
+            // Button highlights
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                btn.classList.remove('text-cyberTeal', 'border-cyberTeal');
+                btn.classList.add('border-slate-800');
+            });
+
+            const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-slate-800');
+                activeBtn.classList.add('text-cyberTeal', 'border-cyberTeal');
+            }
+
+            state.activeTab = tabId;
+            document.getElementById('liveTerminalFeed').innerText = `Matrix route altered to: PORTAL_${tabId.toUpperCase()}`;
+        }
+
+        // NEURAL SKILL DECK MANAGEMENT
+        function renderSkills() {
+            const listContainer = document.getElementById('skillDeckList');
+            listContainer.innerHTML = '';
+
+            state.skills.forEach((skill, idx) => {
+                const item = document.createElement('div');
+                item.className = 'bg-slate-950 p-4 rounded border border-slate-800 flex items-center justify-between relative';
+                item.innerHTML = `
+                    <div class="flex-1 pr-4">
+                        <div class="flex justify-between items-center mb-1 text-xs font-cyber">
+                            <span class="text-slate-100">${skill.name}</span>
+                            <span class="text-cyberTeal">${skill.level}%</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-cyberTeal h-full" style="width: ${skill.level}%"></div>
+                        </div>
+                    </div>
+                    <button onclick="removeSkill(${idx})" class="text-slate-500 hover:text-cyberPink p-1 text-xs transition">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            document.getElementById('hudDeckSkillsCount').innerText = state.skills.length;
+            localStorage.setItem('neon_skills', JSON.stringify(state.skills));
+        }
+
+        function addSkillToDeck() {
+            const nameInput = document.getElementById('newSkillInput');
+            const levelInput = document.getElementById('newSkillLevel');
+
+            const name = nameInput.value.trim();
+            const level = parseInt(levelInput.value) || 80;
+
+            if (!name) {
+                showToast("Data Core Error", "Skill alias name required before mapping.", "error");
+                return;
+            }
+
+            state.skills.push({ name, level: Math.min(100, Math.max(1, level)) });
+            nameInput.value = '';
+            levelInput.value = '';
+
+            renderSkills();
+            showToast("System Improv", `Skill node ${name} integrated.`, "success");
+        }
+
+        function removeSkill(index) {
+            const removed = state.skills.splice(index, 1);
+            renderSkills();
+            showToast("System Re-matrix", `Removed skill node: ${removed[0].name}`, "info");
+        }
+
+        // DB SAVING API INTEGRATION
+        async function saveProfileToDB() {
+            if (!state.user) return;
+            const payload = {
+                appSlug: appSlug,
+                action: "create",
+                collection: "cyber_profiles",
+                data: {
+                    alias: state.user.alias,
+                    class: state.user.class,
+                    skillsList: state.skills,
+                    timestamp: new Date().toISOString()
+                }
+            };
+
+            showToast("Database Synching", "Exporting custom dev matrix data to net cluster...", "info");
+            
+            try {
+                const response = await fetch(dbUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Sync Successful", "User network profile node secured.", "success");
+                } else {
+                    showToast("Sync Offline", "Fallback to localized buffer storage.", "error");
+                }
+            } catch (err) {
+                showToast("Network Grid Offline", "Node written to browser cache only.", "info");
+            }
+        }
+
+        async function saveUserToMongoDB(userData) {
+            try {
+                await fetch(dbUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        appSlug: appSlug,
+                        action: "create",
+                        collection: "cyber_entries",
+                        data: userData
+                    })
+                });
+            } catch (e) {
+                console.log("MongoDB entry creation fallback to offline buffer.");
+            }
+        }
+
+        // AI PROJECT RECOMMENDATIONS & MATCHMAKING
+        async function triggerAIRecommendation() {
+            const spin = document.getElementById('aiSpinIcon');
+            const btn = document.getElementById('aiRecBtn');
+            spin.style.display = 'inline-block';
+            btn.disabled = true;
+
+            const userSkillsText = state.skills.map(s => `${s.name} (${s.level}% level)`).join(', ');
+            const systemPrompt = `You are the ultimate Cyberpunk dev-match Oracle. Based on the runner's technical capability [${userSkillsText}] and background role [${state.user.class}], formulate 2 distinct cyberpunk cyber-application projects. Return only a clean, well-formatted JSON array. No conversational text inside of backticks or outside JSON format. Form: [{"title":"App Name","difficulty":"High","stack":"React, NodeJS","desc":"Brief conceptual neon description"}]`;
+
+            showToast("Initiating Query", "Interfacing Oracle AI layer...", "info");
+
+            try {
+                const response = await fetch(aiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer JBblqSnBC6VPhAn6XZS1pbz2kf82',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: "user", content: [{ type: "text", text: systemPrompt }] }
+                        ]
+                    })
+                });
+
+                const contentData = await response.json();
+                spin.style.display = 'none';
+                btn.disabled = false;
+
+                if (contentData && contentData.message) {
+                    // Extract JSON array
+                    let rawText = contentData.message;
+                    // Sanitize potential backticks
+                    rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+                    const projects = JSON.parse(rawText);
+                    displayAiRecommendations(projects);
+                } else {
+                    displayAiRecommendationsFallback();
+                }
+            } catch (e) {
+                spin.style.display = 'none';
+                btn.disabled = false;
+                displayAiRecommendationsFallback();
+            }
+        }
+
+        function displayAiRecommendations(projects) {
+            document.getElementById('aiRecResults').classList.remove('hidden');
+            const outputSection = document.getElementById('aiRecOutputSection');
+            outputSection.innerHTML = '';
+
+            projects.forEach((proj, i) => {
+                const card = document.createElement('div');
+                card.className = "p-4 bg-slate-950 border border-cyberTeal rounded space-y-2 relative";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h5 class="font-cyber text-sm text-cyberTeal">${proj.title}</h5>
+                        <span class="text-[10px] px-1.5 py-0.5 bg-cyberPink/20 text-cyberPink border border-cyberPink/30 rounded">${proj.difficulty}</span>
+                    </div>
+                    <p class="text-xs text-slate-300">${proj.desc}</p>
+                    <div class="pt-2 text-[10px] text-slate-400">
+                        <span class="text-cyberTeal">COMPATIBLE STACK:</span> ${proj.stack}
+                    </div>
+                    <button onclick="lockProjectSelection('${proj.title.replace(/'/g, "\\'")}', '${proj.stack.replace(/'/g, "\\'")}')" class="w-full mt-3 py-1 bg-slate-900 hover:bg-cyberTeal hover:text-black border border-cyberTeal text-cyberTeal text-[10px] font-cyber uppercase tracking-wider rounded transition">
+                        Select Project Path
+                    </button>
+                `;
+                outputSection.appendChild(card);
+            });
+
+            // Update Dashboard preview
+            const previewSection = document.getElementById('dashboardAiProjectPreview');
+            previewSection.innerHTML = `
+                <div class="flex items-center space-x-2 text-cyberTeal">
+                    <i class="bi bi-shield-check"></i>
+                    <span class="font-cyber text-xs">READY PROJECT DECK DETECTED:</span>
+                </div>
+                <p class="text-xs text-slate-200 mt-1">${projects[0].title} (${projects[0].difficulty}) is selectable in 'Team Matchmaker'!</p>
+            `;
+            showToast("Decks Decrypted", "AI recommendation cards aligned.", "success");
+        }
+
+        function displayAiRecommendationsFallback() {
+            const fallbackProjects = [
+                { title: "SOULEATER_DEFI CONTRACTS", difficulty: "HARD COG", stack: "Solidity, React, Tailwind", desc: "A decentralized neural asset broker targeting neon matrix users safely." },
+                { title: "GHOST_CHAT MESH_NET", difficulty: "MID INTEL", stack: "NodeJS, WebSockets, Three.JS", desc: "A sleek dashboard providing virtual communications with glow brick styling." }
+            ];
+            displayAiRecommendations(fallbackProjects);
+        }
+
+        function lockProjectSelection(title, stack) {
+            state.currentProject = { title, stack };
+            document.getElementById('appProjectNameInput').value = title.toUpperCase().replace(/\s+/g, '_');
+            showToast("Project Secured", `System configured for ${title}`, "success");
+            
+            // Assign dummy task based on this
+            state.tasks = [
+                { id: "t1", title: `Initialize ${title} node scaffold`, assignee: state.user.alias, priority: "MID CORE", status: "todo" },
+                { id: "t2", title: "Map user interface wires", assignee: "Glitch_Queen", priority: "LOW PIN", status: "todo" },
+                { id: "t3", title: "Compile network data hooks", assignee: "NullPointer", priority: "MAX CRISIS", status: "todo" }
+            ];
+            renderTasks();
+            updateProgressMetrics();
+            initiateTeamMatch();
+        }
+
+        // MULTIPLAYER MATCH DESIGN
+        function loadMatrixOperatives() {
+            const grid = document.getElementById('matrixOperativesGrid');
+            grid.innerHTML = '';
+
+            cyberTeammatesPool.forEach(peer => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 p-3 border border-slate-800 hover:border-cyberTeal rounded transition text-xs relative";
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2.5 mb-2">
+                        <img src="${peer.avatar}" class="w-8 h-8 rounded-full object-cover border border-slate-700">
+                        <div>
+                            <p class="font-cyber text-cyberTeal">${peer.alias}</p>
+                            <p class="text-[10px] text-cyberPink">${peer.class}</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400">
+                        <span class="text-cyberTeal">DECK STACKS:</span> ${peer.skills.join(', ')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('matrixCount').innerText = `${cyberTeammatesPool.length} RUNNERS IN RANGE`;
+        }
+
+        function initiateTeamMatch() {
+            if (!state.user) return;
+            
+            // Match with companions that aren't of the user's specialization
+            const matches = cyberTeammatesPool.filter(c => c.class !== state.user.class).slice(0, 2);
+            state.matchedTeam = matches;
+
+            // Update UI indices
+            const teamNames = matches.map(m => m.alias).join(', ');
+            document.getElementById('teamAlignmentStatus').innerHTML = `
+                <span class="text-cyberGreen font-bold font-cyber">STRIKE TEAM LOCKED:</span> ${state.user.alias} (You) + ${teamNames}
+            `;
+            document.getElementById('hudTeamStatus').innerText = "SYSTEM ACTIVE";
+            document.getElementById('hudTeamStatus').className = "text-cyberGreen";
+
+            // Update workspace chat assignees as well
+            const taskAssigneeBox = document.getElementById('taskAssignee');
+            taskAssigneeBox.innerHTML = `<option value="${state.user.alias}">${state.user.alias} (You)</option>`;
+            matches.forEach(m => {
+                taskAssigneeBox.innerHTML += `<option value="${m.alias}">${m.alias}</option>`;
+            });
+
+            showToast("Operatives Synced", `Strike Team Formed with ${teamNames}!`, "success");
+            
+            // Trigger dynamic welcome messages
+            simulateChatThread();
+        }
+
+        // WORKSPACE KANBAN METHODS
+        function openAddTaskModal() {
+            const modal = document.getElementById('taskModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function submitNewTask() {
+            const titleInput = document.getElementById('taskTitleInput');
+            const title = titleInput.value.trim();
+            const assignee = document.getElementById('taskAssignee').value;
+            const priority = document.getElementById('taskPriority').value;
+
+            if (!title) {
+                showToast("Null Mapping Action", "Assign a legitimate contract title.", "error");
+                return;
+            }
+
+            const newTask = {
+                id: 'task_' + Math.random().toString(36).substr(2, 9),
+                title,
+                assignee,
+                priority,
+                status: 'todo'
+            };
+
+            state.tasks.push(newTask);
+            localStorage.setItem('neon_tasks', JSON.stringify(state.tasks));
+
+            titleInput.value = '';
+            document.getElementById('taskModal').classList.add('hidden');
+
+            renderTasks();
+            updateProgressMetrics();
+            showToast("Contract Allocated", `Task injected to dashboard backlog!`, "success");
+
+            // Attempt save to MongoDB
+            saveTaskToMongoDB(newTask);
+        }
+
+        async function saveTaskToMongoDB(task) {
+            try {
+                await fetch(dbUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: "create",
+                        collection: "cyber_tasks",
+                        data: task
+                    })
+                });
+            } catch (e) {
+                console.log("Failed MongoDB task compile - falling back on offline state");
+            }
+        }
+
+        function moveTaskStatus(taskId, newStatus) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = newStatus;
+                localStorage.setItem('neon_tasks', JSON.stringify(state.tasks));
+                renderTasks();
+                updateProgressMetrics();
+                showToast("Pipeline Flowed", "Task state adjusted inside neural registry.", "info");
+            }
+        }
+
+        function deleteTask(taskId) {
+            state.tasks = state.tasks.filter(t => t.id !== taskId);
+            localStorage.setItem('neon_tasks', JSON.stringify(state.tasks));
+            renderTasks();
+            updateProgressMetrics();
+            showToast("Registry Cleared", "Deleted operational node segment.", "info");
+        }
+
+        function renderTasks() {
+            const todoContainer = document.getElementById('kanbanTodo');
+            const inIpContainer = document.getElementById('kanbanInIp');
+            const doneContainer = document.getElementById('kanbanDone');
+
+            todoContainer.innerHTML = '';
+            inIpContainer.innerHTML = '';
+            doneContainer.innerHTML = '';
+
+            let cTodo = 0, cInIp = 0, cDone = 0;
+
+            state.tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = "p-3 bg-slate-900 border border-slate-800 rounded relative group";
+                
+                let priorityColor = "text-yellow-400";
+                if (task.priority === "MAX CRISIS") priorityColor = "text-cyberPink";
+                if (task.priority === "LOW PIN") priorityColor = "text-cyberTeal";
+
+                const isMainUser = (task.assignee === state.user.alias);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-1">
+                        <span class="text-[10px] uppercase font-cyber ${priorityColor}">${task.priority}</span>
+                        <div class="flex space-x-1 opacity-60 group-hover:opacity-100 transition">
+                            ${task.status !== 'todo' ? `<button onclick="moveTaskStatus('${task.id}', 'todo')" title="Backlog" class="text-slate-400 hover:text-cyberTeal text-xs"><i class="bi bi-arrow-left"></i></button>` : ''}
+                            ${task.status !== 'in_progress' ? `<button onclick="moveTaskStatus('${task.id}', 'in_progress')" title="Diagnose" class="text-slate-400 hover:text-cyberPink text-xs"><i class="bi bi-activity"></i></button>` : ''}
+                            ${task.status !== 'done' ? `<button onclick="moveTaskStatus('${task.id}', 'done')" title="Completes" class="text-slate-400 hover:text-cyberGreen text-xs"><i class="bi bi-check-circle-fill"></i></button>` : ''}
+                            <button onclick="deleteTask('${task.id}')" title="Delete" class="text-slate-500 hover:text-cyberPink text-xs"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-slate-100 mt-1 font-cyber leading-snug">${task.title}</p>
+                    
+                    <div class="mt-3 pt-2 border-t border-slate-950 flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-cyber">OPERATIVE: ${task.assignee}</span>
+                        <span class="${isMainUser ? 'bg-cyberTeal/10 text-cyberTeal' : 'bg-slate-800 text-slate-300'} text-[8px] px-1.5 py-0.5 rounded font-cyber uppercase">${isMainUser ? 'SELF' : 'PEER'}</span>
+                    </div>
+                `;
+
+                if (task.status === 'todo') {
+                    todoContainer.appendChild(card);
+                    cTodo++;
+                } else if (task.status === 'in_progress') {
+                    inIpContainer.appendChild(card);
+                    cInIp++;
+                } else {
+                    doneContainer.appendChild(card);
+                    cDone++;
+                }
+            });
+
+            document.getElementById('todoCount').innerText = cTodo;
+            document.getElementById('inProgressCount').innerText = cInIp;
+            document.getElementById('doneCount').innerText = cDone;
+        }
+
+        function updateProgressMetrics() {
+            if (state.tasks.length === 0) {
+                state.completedPercent = 0;
+            } else {
+                const doneCount = state.tasks.filter(t => t.status === 'done').length;
+                state.completedPercent = Math.round((doneCount / state.tasks.length) * 100);
+            }
+
+            document.getElementById('matrixProgressPercent').innerText = `${state.completedPercent}% COMPLETE`;
+            document.getElementById('matrixProgressBar').style.width = `${state.completedPercent}%`;
+            document.getElementById('hudCompletedCount').innerText = `${state.completedPercent}%`;
+        }
+
+
+        // REAL-TIME INDEPENDENT CHAT THREADS Simulating match activities
+        function simulateChatThread() {
+            const flow = document.getElementById('chatMessageFlow');
+            flow.innerHTML = '';
+
+            state.chatMessages = [
+                { sender: "system_auth", msg: "SYNC-CHANNEL SECURED (AES-256). WELCOME YOUR CO-LAB MATCHES." }
+            ];
+
+            if (state.matchedTeam) {
+                state.matchedTeam.forEach((member, i) => {
+                    state.chatMessages.push({
+                        sender: member.alias,
+                        msg: `Hail ${state.user.alias}! My neural matrix is synced. Ready to code the project framework.`
+                    });
+                });
+            } else {
+                state.chatMessages.push({ sender: "System Bot", msg: "Establish teammate matches in the matching tab to open full strike channels." });
+            }
+
+            renderChatFlow();
+        }
+
+        function renderChatFlow() {
+            const flow = document.getElementById('chatMessageFlow');
+            flow.innerHTML = '';
+
+            state.chatMessages.forEach(c => {
+                const row = document.createElement('div');
+                const isSelf = (c.sender === state.user.alias);
+                const isSys = (c.sender === 'system_auth');
+
+                if (isSys) {
+                    row.className = "text-center my-2 text-[10px] font-cyber text-cyberTeal uppercase tracking-widest bg-slate-950/40 p-2 rounded border border-cyberTeal/10";
+                    row.innerText = c.msg;
+                } else {
+                    row.className = `flex ${isSelf ? 'justify-end' : 'justify-start'}`;
+                    row.innerHTML = `
+                        <div class="max-w-[75%] p-3 rounded text-xs ${isSelf ? 'bg-cyberTeal text-black rounded-tr-none' : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none'}">
+                            <span class="block text-[8px] font-cyber opacity-70 mb-1 ${isSelf ? 'text-black' : 'text-cyberPink'}">${c.sender.toUpperCase()}</span>
+                            <p>${c.msg}</p>
+                        </div>
+                    `;
+                }
+                flow.appendChild(row);
+            });
+
+            flow.scrollTop = flow.scrollHeight;
+        }
+
+        function sendChatMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('chatMessageInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const newMsg = { sender: state.user.alias, msg: msg };
+            state.chatMessages.push(newMsg);
+            input.value = '';
+            renderChatFlow();
+
+            // Attempt save to MongoDB
+            saveChatToMongoDB(newMsg);
+
+            // Simulation of automated response
+            if (state.matchedTeam && state.matchedTeam.length > 0) {
+                setTimeout(() => {
+                    const randomTeammate = state.matchedTeam[Math.floor(Math.random() * state.matchedTeam.length)];
+                    state.chatMessages.push({
+                        sender: randomTeammate.alias,
+                        msg: `Acknowledged ping. Executing diagnostic stack update.`
+                    });
+                    renderChatFlow();
+                }, 1500);
+            }
+        }
+
+        async function saveChatToMongoDB(msgObj) {
+            try {
+                await fetch(dbUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        appSlug,
+                        action: "create",
+                        collection: "cyber_chats",
+                        data: msgObj
+                    })
+                });
+            } catch (e) {
+                console.log("Chat offline fallback cache");
+            }
+        }
+
+
+        // APP & LOGO CANVASES PROTOCOL FORGING
+        function forgeAppAndLogo() {
+            const nameInput = document.getElementById('appProjectNameInput');
+            const themeNode = document.getElementById('appThemeColor').value;
+            const targetPlat = document.querySelector('input[name="targetPlat"]:checked').value;
+
+            const name = nameInput.value.trim() || "NEON_DECK";
+            
+            let colorHex = "#0bb7db"; // cyberTeal matching brick hue
+            if (themeNode === 'cyberPink') colorHex = '#ff007f';
+            if (themeNode === 'cyberGreen') colorHex = '#39ff14';
+            if (themeNode === 'orange') colorHex = '#f97316';
+
+            const outputArea = document.getElementById('forgeDraftArea');
+            outputArea.innerHTML = `
+                <div class="text-center space-y-4 w-full">
+                    <!-- SVG Cyber Logo dynamic generator -->
+                    <div class="mx-auto w-24 h-24 p-2 bg-slate-900 border-2 rounded flex items-center justify-center relative" style="border-color: ${colorHex}">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" fill="none" stroke="${colorHex}" stroke-width="4" />
+                            <circle cx="50" cy="50" r="28" fill="none" stroke="${colorHex}" stroke-dasharray="8 4" stroke-width="2" class="animate-spin" style="transform-origin: 50px 50px;" />
+                            <text x="50" y="56" fill="${colorHex}" font-family="Orbitron" font-size="16" font-weight="900" text-anchor="middle">${name.slice(0, 3)}</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h4 class="font-cyber text-slate-100 text-sm tracking-wider">${name}</h4>
+                        <span class="text-[9px] px-2 py-0.5 bg-slate-900 border border-slate-700 text-slate-300 font-cyber rounded uppercase">${targetPlat} PLATFORM</span>
+                    </div>
+
+                    <div class="text-xs text-slate-400 bg-slate-900 p-2 rounded border border-slate-800 text-left font-mono">
+                        <span class="text-cyberGreen">&gt; app.config.json:</span><br>
+                        "project": "${name}",<br>
+                        "theme": "${colorHex}",<br>
+                        "compiler": "${targetPlat.replace(' ', '_')}"
+                    </div>
+                </div>
+            `;
+
+            showToast("Asset Pack Forged", `App & Logo generated with ${themeNode} branding!`, "success");
+        }
+
+        // SIMULATED SYSTEM ACTION EXPEDITIONS
+        function exportCode() {
+            showToast("Generating Codebase", "Packaging project configuration deck...", "info");
+            setTimeout(() => {
+                alert("CO-LAB NET EXPORT PACKAGE INITIALIZED.\n\nFile download triggered with code asset index templates inside your local cache directory.");
+            }, 800);
+        }
+
+        function downloadCertificate() {
+            const runner = state.user ? state.user.alias : "CYBER_RUNNER";
+            showToast("Generating PDF spec", "Preparing verified SVG system cert asset...", "info");
+            setTimeout(() => {
+                alert(`STAMP DOWNLOAD PROTOCOL SUCCESSFUL\n\nVerified credentials for ${runner} downloaded automatically to system interface logs.`);
+            }, 1000);
+        }
+
+        function simulateTotalProjectExport() {
+            const dataToExport = {
+                user: state.user,
+                userSkillsDeck: state.skills,
+                activeMatrixContracts: state.tasks,
+                networkLogs: "ENCRYPTED_DECK_VALID"
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `neon_net_deck_${state.user ? state.user.alias : "runner"}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+
+            showToast("Deck Exported", "Config deck backup JSON dispatched downstream.", "success");
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
